@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-import sys
 import argparse
+import boto3
 import os.path
+import sys
+import threading
 from urllib.request import urlretrieve
 from urllib.parse import urlparse
-import threading
-import boto3
 
 class ownParser(argparse.ArgumentParser):
     def error(self, message):
