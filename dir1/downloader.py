@@ -2,6 +2,7 @@
 
 import argparse
 import boto3
+import ftplib
 import os.path
 import sys
 import threading
@@ -13,6 +14,19 @@ class ownParser(argparse.ArgumentParser):
         sys.stderr.write('error: %s\n\n' % message)
         self.print_help()
         sys.exit(1)
+
+def downloaderFTP(resource, file_name, results):
+    path        = resource[0]
+    urlparsed   = resource[1]
+    try:
+        ftp = ftplib.FTP(urlparsed.netloc)
+        ftp.login()
+        ftp.cwd(os.path.split(urlparsed.path)[0])
+        ftp.retrbinary("RETR " + urlparsed.path ,open(file_name, 'wb').write)
+        ftp.quit()
+        results.update({file_name:"Ok"})
+    except Exception:
+        results.update({file_name:"Ko"})
 
 def downloaderS3(resource, file_name, results):
     path        = resource[0]
@@ -39,7 +53,8 @@ def downloaderHttp(resource, file_name, results):
 
 schemes = {"http": downloaderHttp,
            "https": downloaderHttp,
-           "s3": downloaderS3
+           "s3": downloaderS3,
+           "ftp": downloaderFTP
 }
 
 # The main rutine will put into a hash table (dictionary) the names of the files to download as the key (to prevent the download
