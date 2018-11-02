@@ -50,6 +50,7 @@ schemes = {"http": downloaderHttp,
 # and the correspoing routine that will handle the download. That way we can spawn a thread to handle the download and the routine
 # that the thread will run can be easily found in the schemes hash table.
 #
+# Finally, we don't need to use semaphore to protect the results hash since those basic Python structures are thread-safe
 if __name__ == '__main__':
     files_to_download = {}
     results           = {}
