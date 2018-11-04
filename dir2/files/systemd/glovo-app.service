@@ -1,0 +1,12 @@
+[Unit]
+Description=Glovo-App Daemon
+
+[Service]
+ExecStart=/usr/bin/java -jar /var/www/glovo-app/systems-engineer-interview.jar server
+User=glovo-app
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=glovo-app
+
+[Install]
+WantedBy=multi-user.target
