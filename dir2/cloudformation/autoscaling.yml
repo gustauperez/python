@@ -1,0 +1,188 @@
+AWSTemplateFormatVersion: "2010-09-09"  
+Parameters:
+  KeyName:
+    Type: String
+    Default: gusikp
+  VersionId:
+    Type: String
+    Default: 1.0
+    Description: Provide a version tag
+  InstanceTypeParameter: 
+    Type: String
+    Default: t2.micro
+    AllowedValues: 
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - m1.small
+      - m1.large
+    Description: Enter t2.medium, t2.small, t2.micro, m1.small, or m1.large. Default is t2.small.
+  AMIId:
+    Type:   String
+    Default: ami-a2e7e749
+    Description: AMI id to be used
+  SecurityGroup:
+    Type: String
+    Description: Security groups to add
+  AWSCertificate:
+    Type: String
+    Description: AWS Certificate ID to use
+  UserData:
+    Type: String
+    Default: "80"
+  MinSize:
+    Type: Number
+    Default: 1
+  MaxSize:
+    Type: Number
+    Default: 3
+  DesiredCapacity:
+    Type: Number
+    Default: 2
+  Subnets:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Subnets to use
+  DNSRecord:
+    Type: String
+    Description: DNS record that will point to the load balancer
+Resources:
+  GlovoAppASC:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      AssociatePublicIpAddress: true
+      LaunchConfigurationName: GlovoAppASC
+      KeyName:
+        Ref: KeyName
+      InstanceType:
+        Ref: InstanceTypeParameter
+      ImageId:
+        Ref: AMIId
+      UserData:
+        Ref: UserData
+      SecurityGroups: [ {"Ref":  "SecurityGroup"} ]
+      EbsOptimized: false
+      IamInstanceProfile: S3ReadOnlyRole
+      InstanceMonitoring: false
+
+  GlovoAppScaleUpPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName:
+        Ref: AutoscalingGroup
+      Cooldown: '60'
+      ScalingAdjustment: 1
+
+  GlovoAppScaleDownPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName:
+        Ref: AutoscalingGroup
+      Cooldown: '60'
+      ScalingAdjustment: -1
+
+  CPUAlarmHigh:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Scale-up if CPU > 90% for 5 minutes
+      MetricName: CPUUtilization
+      Namespace: AWS/EC2
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 90
+      AlarmActions: [!Ref 'GlovoAppScaleUpPolicy']
+      Dimensions:
+      - Name: AutoScalingGroupName
+        Value: AutoscalingGroup
+      ComparisonOperator: GreaterThanThreshold
+
+  CPUAlarmLow:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Scale-down if CPU < 70% for 5 minutes
+      MetricName: CPUUtilization
+      Namespace: AWS/EC2
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 70
+      AlarmActions: [!Ref 'GlovoAppScaleDownPolicy']
+      Dimensions:
+      - Name: AutoScalingGroupName
+        Value: AutoscalingGroup
+      ComparisonOperator: LessThanThreshold
+      
+  GlovoAppLB:    
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      CrossZone: false
+      Subnets: !Ref "Subnets"
+      LBCookieStickinessPolicy:
+        - PolicyName: glovo-app-LBStickinessPolicy
+          CookieExpirationPeriod: '3600'
+      LoadBalancerName: GlovoAppLB
+      Listeners:
+      - LoadBalancerPort: '80'
+        Protocol: HTTP
+        #SSLCertificateId: Ref: AWSCertificate
+        InstancePort: '80'
+        InstanceProtocol: HTTP
+        PolicyNames:
+          - glovo-app-LBStickinessPolicy
+
+      HealthCheck:
+        Target: HTTP:80/
+        HealthyThreshold: '3'
+        UnhealthyThreshold: '5'
+        Interval: '30'
+        Timeout: '5'
+      SecurityGroups: [ {"Ref":  "SecurityGroup"} ]
+      Tags:
+        - 
+          Key: version
+          Value: !Ref VersionId
+
+  AutoscalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: !Join ["", ["asg-v", !Ref VersionId ]]
+      Cooldown: 120 
+      HealthCheckGracePeriod: 300
+      HealthCheckType: ELB
+      LaunchConfigurationName:
+        Ref: GlovoAppASC
+      LoadBalancerNames:
+        - Ref: GlovoAppLB
+      MaxSize: 
+         Ref: MaxSize 
+      DesiredCapacity:
+        Ref: DesiredCapacity
+      MinSize:
+        Ref: MinSize
+      Tags:
+        - 
+          Key: version
+          Value: !Ref VersionId
+          PropagateAtLaunch: true
+        - 
+          Key: Name
+          Value: !Join ["", ["instance-asg-v",!Ref VersionId]]
+          PropagateAtLaunch: true
+      VPCZoneIdentifier: !Ref "Subnets"
+    UpdatePolicy:
+      AutoScalingReplacingUpdate:
+        WillReplace: True
+
+  loadBalancerDNS:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneName: gustau.perez.
+      Comment: Zone alias targeted to the glovo-app LoadBalancer.
+      RecordSets:
+      - Name: !Ref DNSRecord
+        Type: A
+        AliasTarget:
+          HostedZoneId: !GetAtt GlovoAppLB.CanonicalHostedZoneNameID
+          DNSName: !GetAtt GlovoAppLB.DNSName      
