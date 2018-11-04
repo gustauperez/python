@@ -2,10 +2,12 @@
 
 This repository contains two directories:
 - The directory *dir1* contains a sample python3 script that would download a bunch of files in parallel. Right now it supports http, https and S3.
+- The directory *dir2* contains a cloudformation template, a bash scripts to do the deploys and updates and some additional files, some of those resources will be deployed inside the instances (from a secured S3 bucket) and a cloud-init scripts (Amazon's user-data field) reponsible of the final provision of the instances, including fetching those S3 resources we were talking about.
 
 ## Python script
 
 The python script can receive two different flags:
+
 - The *-h* shows the help
 - The *-u|--url* can receive one or remote url (http, https and s3 urls).
 
