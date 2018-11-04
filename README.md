@@ -51,7 +51,7 @@ To provide the desired functionality, I've designed a script called *glovo-app-c
      DESIREDCAPACITY:   Desired  size of the autoscaling group (Defaults 2)
      MAXSIZE:           Max size of the autoscaling group (Defaults 3)
      AWSCERTIFICATE:    AWS Certificate ID to use in the HTTPS balancer
-	 DNSRECORD:			DNS A record that will point to the load balancer
+     DNSRECORD:			DNS A record that will point to the load balancer
      CLOUD_INIT_PATH:   Path of the cloud-init script to use
 ```
 
@@ -79,13 +79,13 @@ Given those two solutions, I went with the easier one which involves upgrading t
 
 The script uses the *BUILD_NUMBER* variable to provision the new ASG and tag the instances. That variable must always increment and must always be set to force the deploy of the new ASG and its instances.
 
-#### Autoscaling
+### Autoscaling
 
 The template uses the CloudFomation directives *GlovoAppScaleUpPolicy* and *GlovoAppScaleDownPolicy* of the type *AWS::AutoScaling::ScalingPolicy* to scale up and down.
 
 Those scaling policies are triggered by two *AWS::CloudWatch::Alarm* alarms. The scale up policy check if the running instances are using more that the 90% of the CPU more that 5 minutes. Those values could be easily changed using parameters (the task is trivial) but I kept those figures for the sake of simplicity of the template. The same happens with the scale down policy, which will remove one instance if the CPU usage is below the 70% during 5 minutes or more.
 
-#### Deploying of new code
+### Deploying of new code
 
 When a stack update happens, a new autoscaling group will be provisioned and attached to the GlovoAppLB. To avoid connection outtages, the AutoScaling has been set up with the following:
 
@@ -189,7 +189,7 @@ There are a few options. One could be to use VAULT to access those credentials i
 
 Another options will be to use S3 buckets and granting access to those buckets using IAM roles. That way we don't spread credentials in the instances and the role can be revoked as soon as the machines don't need it.
 
-###  A proposal for application log management and archiving
+### A proposal for application log management and archiving
 
 To manage the logs and archive them, one easy solution would be to send them to a centralized repository of logs. To do so, we could change the *Rsyslog* daemon on each instance to poll the *syslog* output, for any log tagged withg *glovo-app* the *Rsyslog* could send them to a centralized Rsyslog machine.
 
