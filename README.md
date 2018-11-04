@@ -33,6 +33,8 @@ To install boto3, issue the following commands:
 ``` pip3 install boto3
 ```
 
+The FTP and HTTP(S) modules are part of the Python 3 base libraries so no need to any additional installation.
+
 ## Cloudformation
 
 The cloudformation work is under the directory *dir2*. All references to files will be relative to that directory.
