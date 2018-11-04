@@ -4,7 +4,7 @@ This repository contains two directories:
 - The directory *dir1* contains a sample python3 script that would download a bunch of files in parallel. Right now it supports http, https and S3.
 - The directory *dir2* contains a cloudformation template, a bash scripts to do the deploys and updates and some additional files, some of those resources will be deployed inside the instances (from a secured S3 bucket) and a cloud-init scripts (Amazon's user-data field) reponsible of the final provision of the instances, including fetching those S3 resources we were talking about.
 
-## Python script
+## Python downloader
 
 The python script can receive two different flags:
 
@@ -13,11 +13,25 @@ The python script can receive two different flags:
 
 The script will download the requested files in the current directory. If one file appears more than once, only the last one will be downloaded (to avoid downloading the same file more than once).
 
+The S3 module will use the credentials configured with *aws configure*. It will use the *default* profile.
+
 When the script finishes it will report the status of the downloads.
 
 If one file does uses an unsupported url scheme, the script will report that and exit with error code *1*
 
 Upon exiting, if all the downloads went well and all the requested files used a supported url schema, the script will return *0*. Otherwise will return *1*.
+
+### Requirements
+
+The downloader requires:
+
+- Python 3
+- The boto3 module
+
+To install boto3, issue the following commands:
+
+``` pip3 install boto3
+```
 
 ## Cloudformation
 
