@@ -51,7 +51,7 @@ To provide the desired functionality, I've designed a script called *glovo-app-c
      DESIREDCAPACITY:   Desired  size of the autoscaling group (Defaults 2)
      MAXSIZE:           Max size of the autoscaling group (Defaults 3)
      AWSCERTIFICATE:    AWS Certificate ID to use in the HTTPS balancer
-	 DNSRECORD:			
+	 DNSRECORD:			DNS A record that will point to the load balancer
      CLOUD_INIT_PATH:   Path of the cloud-init script to use
 ```
 
