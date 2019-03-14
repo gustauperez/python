@@ -11,5 +11,10 @@ pipeline {
         sh 'curl http://checkip.amazonaws.com'
       }
     }
+    stage('Artifact') {
+      steps {
+        archiveArtifacts 'README.md'
+      }
+    }
   }
 }
