@@ -12,8 +12,17 @@ pipeline {
       }
     }
     stage('Artifact') {
-      steps {
-        archiveArtifacts 'README.md'
+      parallel {
+        stage('Artifact') {
+          steps {
+            archiveArtifacts 'README.md'
+          }
+        }
+        stage('Artifact 2') {
+          steps {
+            archiveArtifacts 'README.md'
+          }
+        }
       }
     }
   }
